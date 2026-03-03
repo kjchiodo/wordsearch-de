@@ -410,7 +410,7 @@ function parseWordsTxt(text) {
     const parts = line.split(/\s+/);
     const word = parts[0].toUpperCase();
     const level = (parts[1] || 'A2').toUpperCase();
-    if (!/^[A-Z]{4,12}$/.test(word)) continue;
+    if (!/^[A-Z]{4,20}$/.test(word)) continue;
     if (!result[level]) continue;
     result[level].push(word);
   }

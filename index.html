@@ -1,22 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Word Search</title>
+<title>Wörtersuche</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0e0e14;
-    --grid-bg: #13131c;
-    --cell-size: 38px;
-    --accent: #f5c842;
-    --accent2: #e84393;
-    --found: #3dffa0;
-    --text: #e8e8f0;
-    --muted: #5a5a7a;
+  /* ── Themes ── */
+  [data-theme="dark"] {
+    --bg:        #0e0e14;
+    --bg2:       #13131c;
+    --border:    #2a2a3e;
+    --accent:    #f5c842;
+    --accent2:   #e84393;
+    --text:      #e8e8f0;
+    --muted:     #5a5a7a;
+    --shadow:    rgba(0,0,0,0.5);
+    --grad1:     #1a1040;
+    --grad2:     #0a2030;
+    --cell-text: #e8e8f0;
+    --found-bg-alpha: 0.18;
+    --found-border-alpha: 0.4;
+    --found-list-alpha: 0.07;
+    --toggle-icon: "☀";
   }
+  [data-theme="light"] {
+    --bg:        #eef0f5;
+    --bg2:       #f8f9fc;
+    --border:    #c8ccd8;
+    --accent:    #5c6bc0;
+    --accent2:   #e91e8c;
+    --text:      #1e2240;
+    --muted:     #7c809a;
+    --shadow:    rgba(60,70,120,0.10);
+    --grad1:     #e3e8f8;
+    --grad2:     #f0e8f4;
+    --cell-text: #2a2e50;
+    --found-bg-alpha: 0.20;
+    --found-border-alpha: 0.50;
+    --found-list-alpha: 0.13;
+    --toggle-icon: "☾";
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -26,191 +53,264 @@
     flex-direction: column;
     align-items: center;
     padding: 32px 16px;
-    background-image: radial-gradient(ellipse at 20% 0%, #1a1040 0%, transparent 60%),
-                      radial-gradient(ellipse at 80% 100%, #0a2030 0%, transparent 60%);
+    transition: background 0.3s, color 0.3s;
+    background-image: radial-gradient(ellipse at 20% 0%, var(--grad1) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 100%, var(--grad2) 0%, transparent 60%);
   }
+
+  /* ── Theme toggle ── */
+  #theme-toggle {
+    position: fixed; top: 16px; right: 20px;
+    background: transparent; border: 2px solid var(--border);
+    color: var(--muted); font-size: 18px; width: 40px; height: 40px;
+    border-radius: 50%; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
   h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(48px, 8vw, 80px);
     letter-spacing: 8px;
     color: var(--accent);
-    text-shadow: 4px 4px 0 var(--accent2), 0 0 60px rgba(245,200,66,0.3);
+    text-shadow: 3px 3px 0 var(--accent2), 0 0 40px rgba(92,107,192,0.15);
     margin-bottom: 4px;
   }
-  .subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: 20px;
+  .subtitle { color: var(--muted); font-size: 11px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 20px; }
+
+  /* ── Divider ── */
+  .section-divider {
+    display: flex; align-items: center; color: var(--muted);
+    font-size: 10px; letter-spacing: 3px; gap: 10px; margin-bottom: 12px; width: 100%; max-width: 600px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
   }
 
-  /* Level selector */
-  .level-selector {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 28px;
+  /* ── Controls ── */
+  #controls { display: none; flex-direction: column; align-items: center; gap: 0; width: 100%; max-width: 620px; }
+
+  /* ── Difficulty ── */
+  .diff-selector { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+  .diff-btn {
+    font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2px;
+    padding: 6px 18px; border-radius: 3px; border: 2px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s;
   }
+  .diff-btn:hover { border-color: var(--text); color: var(--text); }
+  .diff-btn.active[data-diff="easy"]   { background: #3dba7a; border-color: #3dba7a; color: #fff; }
+  .diff-btn.active[data-diff="medium"] { background: #c8a000; border-color: #c8a000; color: #fff; }
+  .diff-btn.active[data-diff="hard"]   { background: #c4006a; border-color: #c4006a; color: #fff; }
+
+  /* ── Vocab level ── */
+  .level-selector { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
   .level-btn {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    letter-spacing: 2px;
-    padding: 6px 14px;
-    border-radius: 3px;
-    border: 2px solid #2a2a3e;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    min-width: 52px;
-    text-align: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px;
+    padding: 6px 14px; border-radius: 3px; border: 2px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; min-width: 52px; text-align: center;
   }
   .level-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .level-btn.active {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--bg);
-  }
   .level-btn[data-level="A1"].active { background: #4fc3f7; border-color: #4fc3f7; color: #0e0e14; }
-  .level-btn[data-level="A2"].active { background: #81c784; border-color: #81c784; color: #0e0e14; }
-  .level-btn[data-level="B1"].active { background: #f5c842; border-color: #f5c842; color: #0e0e14; }
-  .level-btn[data-level="B2"].active { background: #ff9800; border-color: #ff9800; color: #0e0e14; }
-  .level-btn[data-level="C1"].active { background: #e84393; border-color: #e84393; color: #fff; }
-  .level-btn[data-level="C2"].active { background: #ce93d8; border-color: #ce93d8; color: #0e0e14; }
-  .level-divider {
-    display: flex;
-    align-items: center;
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 2px;
-    gap: 8px;
-    margin-bottom: 28px;
-  }
-  .level-divider::before, .level-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #2a2a3e;
-    max-width: 80px;
-  }
-  #level-warning {
-    font-size: 11px;
-    color: var(--accent2);
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-    min-height: 16px;
-    text-align: center;
-  }
+  .level-btn[data-level="A2"].active { background: #43a047; border-color: #43a047; color: #fff; }
+  .level-btn[data-level="B1"].active { background: #c8a000; border-color: #c8a000; color: #fff; }
+  .level-btn[data-level="B2"].active { background: #e65100; border-color: #e65100; color: #fff; }
+  .level-btn[data-level="C1"].active { background: #c4006a; border-color: #c4006a; color: #fff; }
+  .level-btn[data-level="C2"].active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
 
-  /* Loading */
+  #level-warning { font-size: 11px; color: var(--accent2); letter-spacing: 2px; margin-bottom: 12px; min-height: 16px; text-align: center; }
+
+  /* ── Loading ── */
   #loading { margin-top: 40px; text-align: center; padding: 20px; }
-  .spinner {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: 4px;
-    color: var(--accent);
-    animation: pulse 1s infinite alternate;
-  }
-  @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+  .spinner { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 4px; color: var(--accent); animation: blink 1s infinite alternate; }
+  @keyframes blink { from { opacity: 0.3; } to { opacity: 1; } }
 
-  .game-wrap {
-    display: none;
-    gap: 40px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  /* ── Game layout ── */
+  .game-wrap { display: none; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
   .grid-container { position: relative; }
   #grid {
-    display: grid;
-    gap: 2px;
-    background: var(--grid-bg);
-    border: 2px solid #2a2a3e;
-    padding: 12px;
-    border-radius: 4px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.3);
-    user-select: none;
-    cursor: crosshair;
+    display: grid; gap: 2px; background: var(--bg2);
+    border: 2px solid var(--border); padding: 12px; border-radius: 4px;
+    box-shadow: 0 0 40px var(--shadow), inset 0 0 40px rgba(0,0,0,0.05);
+    user-select: none; cursor: crosshair;
+    transition: background 0.3s, border-color 0.3s;
   }
   .cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: 15px;
-    border-radius: 3px;
-    color: var(--text);
-    transition: background 0.1s, color 0.1s;
-    border: 1px solid transparent;
-    position: relative;
-    z-index: 1;
+    width: var(--cell-size); height: var(--cell-size);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px;
+    border-radius: 3px; color: var(--cell-text);
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+    border: 1px solid transparent; position: relative; z-index: 1;
   }
-  .cell.selected { background: rgba(245,200,66,0.25); border-color: rgba(245,200,66,0.5); color: var(--accent); }
-  .cell.found { background: rgba(61,255,160,0.15); border-color: rgba(61,255,160,0.3); color: var(--found); }
+  .cell.selected { background: rgba(92,107,192,0.15); border-color: rgba(92,107,192,0.45); color: var(--accent); }
+  [data-theme="dark"] .cell.selected { background: rgba(245,200,66,0.2); border-color: rgba(245,200,66,0.5); color: var(--accent); }
 
-  .sidebar { min-width: 200px; }
-  .sidebar h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 4px;
-    color: var(--accent2);
-    margin-bottom: 16px;
-    border-bottom: 1px solid #2a2a3e;
-    padding-bottom: 8px;
-  }
-  .word-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  /* ── Per-word found colours ── */
+  /* Light: rich, saturated colors that read well on pale bg */
+  /* Dark: bright neon overrides below */
+  .cell.found-0  { background: rgba( 56,142, 60,var(--found-bg-alpha)); border-color: rgba( 56,142, 60,var(--found-border-alpha)); color: #388e3c; }
+  .cell.found-1  { background: rgba( 25,118,210,var(--found-bg-alpha)); border-color: rgba( 25,118,210,var(--found-border-alpha)); color: #1976d2; }
+  .cell.found-2  { background: rgba(245,124,  0,var(--found-bg-alpha)); border-color: rgba(245,124,  0,var(--found-border-alpha)); color: #e65100; }
+  .cell.found-3  { background: rgba(194, 24, 91,var(--found-bg-alpha)); border-color: rgba(194, 24, 91,var(--found-border-alpha)); color: #c2185b; }
+  .cell.found-4  { background: rgba( 81, 45,168,var(--found-bg-alpha)); border-color: rgba( 81, 45,168,var(--found-border-alpha)); color: #512da8; }
+  .cell.found-5  { background: rgba(  0,151,167,var(--found-bg-alpha)); border-color: rgba(  0,151,167,var(--found-border-alpha)); color: #0097a7; }
+  .cell.found-6  { background: rgba(121, 85, 72,var(--found-bg-alpha)); border-color: rgba(121, 85, 72,var(--found-border-alpha)); color: #795548; }
+  .cell.found-7  { background: rgba(211, 47, 47,var(--found-bg-alpha)); border-color: rgba(211, 47, 47,var(--found-border-alpha)); color: #d32f2f; }
+  .cell.found-8  { background: rgba( 57,  73,171,var(--found-bg-alpha)); border-color: rgba( 57, 73,171,var(--found-border-alpha)); color: #3949ab; }
+  .cell.found-9  { background: rgba(  2,136, 66,var(--found-bg-alpha)); border-color: rgba(  2,136, 66,var(--found-border-alpha)); color: #00880a; }
+  .cell.found-10 { background: rgba(130,119,  23,var(--found-bg-alpha)); border-color: rgba(130,119, 23,var(--found-border-alpha)); color: #827717; }
+  .cell.found-11 { background: rgba(136, 14,179,var(--found-bg-alpha)); border-color: rgba(136, 14,179,var(--found-border-alpha)); color: #7b1fa2; }
+  .cell.found-12 { background: rgba(  0,121,107,var(--found-bg-alpha)); border-color: rgba(  0,121,107,var(--found-border-alpha)); color: #00796b; }
+  .cell.found-13 { background: rgba(230, 74, 25,var(--found-bg-alpha)); border-color: rgba(230, 74, 25,var(--found-border-alpha)); color: #bf360c; }
+  .cell.found-14 { background: rgba( 69, 90,100,var(--found-bg-alpha)); border-color: rgba( 69, 90,100,var(--found-border-alpha)); color: #455a64; }
+
+  /* Dark mode: brighter text for found cells */
+  [data-theme="dark"] .cell.found-0  { color: #3dffa0; }
+  [data-theme="dark"] .cell.found-1  { color: #4fc3f7; }
+  [data-theme="dark"] .cell.found-2  { color: #f5c842; }
+  [data-theme="dark"] .cell.found-3  { color: #e84393; }
+  [data-theme="dark"] .cell.found-4  { color: #ce93d8; }
+  [data-theme="dark"] .cell.found-5  { color: #ff9800; }
+  [data-theme="dark"] .cell.found-6  { color: #81c784; }
+  [data-theme="dark"] .cell.found-7  { color: #f06262; }
+  [data-theme="dark"] .cell.found-8  { color: #4dd0e1; }
+  [data-theme="dark"] .cell.found-9  { color: #ffd54f; }
+  [data-theme="dark"] .cell.found-10 { color: #aed581; }
+  [data-theme="dark"] .cell.found-11 { color: #f0b9ff; }
+  [data-theme="dark"] .cell.found-12 { color: #64dcff; }
+  [data-theme="dark"] .cell.found-13 { color: #ff8a65; }
+  [data-theme="dark"] .cell.found-14 { color: #a1887f; }
+
+  /* ── Sidebar ── */
+  .sidebar { min-width: 210px; max-width: 240px; }
+  .sidebar h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 4px; color: var(--accent2); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .word-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
   .word-list li {
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); transition: all 0.3s; display: flex; align-items: center; gap: 8px;
+    padding: 3px 6px; border-radius: 3px; border-left: 3px solid transparent;
   }
-  .word-list li::before { content: '○'; color: var(--muted); transition: all 0.3s; }
-  .word-list li.found { color: var(--found); text-decoration: line-through; text-decoration-color: rgba(61,255,160,0.5); }
-  .word-list li.found::before { content: '✓'; color: var(--found); }
+  .word-list li::before { content: '○'; transition: all 0.3s; flex-shrink: 0; }
+  .word-list li.found { text-decoration: line-through; }
+  .word-list li.found::before { content: '✓'; }
 
-  #status {
-    margin-top: 24px;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--muted);
-    min-height: 16px;
+
+  /* Word list found colours — light: rich, dark: neon (see overrides below) */
+  .word-list li.found-0  { color: #388e3c; border-left-color: #388e3c; background: rgba( 56,142, 60,var(--found-list-alpha)); }
+  .word-list li.found-1  { color: #1976d2; border-left-color: #1976d2; background: rgba( 25,118,210,var(--found-list-alpha)); }
+  .word-list li.found-2  { color: #e65100; border-left-color: #e65100; background: rgba(245,124,  0,var(--found-list-alpha)); }
+  .word-list li.found-3  { color: #c2185b; border-left-color: #c2185b; background: rgba(194, 24, 91,var(--found-list-alpha)); }
+  .word-list li.found-4  { color: #512da8; border-left-color: #512da8; background: rgba( 81, 45,168,var(--found-list-alpha)); }
+  .word-list li.found-5  { color: #0097a7; border-left-color: #0097a7; background: rgba(  0,151,167,var(--found-list-alpha)); }
+  .word-list li.found-6  { color: #795548; border-left-color: #795548; background: rgba(121, 85, 72,var(--found-list-alpha)); }
+  .word-list li.found-7  { color: #d32f2f; border-left-color: #d32f2f; background: rgba(211, 47, 47,var(--found-list-alpha)); }
+  .word-list li.found-8  { color: #3949ab; border-left-color: #3949ab; background: rgba( 57, 73,171,var(--found-list-alpha)); }
+  .word-list li.found-9  { color: #00880a; border-left-color: #00880a; background: rgba(  2,136, 66,var(--found-list-alpha)); }
+  .word-list li.found-10 { color: #827717; border-left-color: #827717; background: rgba(130,119, 23,var(--found-list-alpha)); }
+  .word-list li.found-11 { color: #7b1fa2; border-left-color: #7b1fa2; background: rgba(136, 14,179,var(--found-list-alpha)); }
+  .word-list li.found-12 { color: #00796b; border-left-color: #00796b; background: rgba(  0,121,107,var(--found-list-alpha)); }
+  .word-list li.found-13 { color: #bf360c; border-left-color: #bf360c; background: rgba(230, 74, 25,var(--found-list-alpha)); }
+  .word-list li.found-14 { color: #455a64; border-left-color: #455a64; background: rgba( 69, 90,100,var(--found-list-alpha)); }
+
+  /* ── Light theme specific overrides ── */
+  [data-theme="light"] body {
+    background-color: var(--bg);
   }
+  [data-theme="light"] h1 {
+    text-shadow: 3px 3px 0 var(--accent2), 0 0 30px rgba(92,107,192,0.12);
+  }
+  [data-theme="light"] #theme-toggle {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(60,70,120,0.12);
+  }
+  /* Inactive buttons look cleaner on light */
+  [data-theme="light"] .diff-btn,
+  [data-theme="light"] .level-btn {
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(60,70,120,0.08);
+  }
+  [data-theme="light"] .diff-btn:hover { background: #f0f2ff; }
+  [data-theme="light"] .level-btn:hover { background: #f0f2ff; }
+  /* Active diff buttons — same palette but lighter feel */
+  [data-theme="light"] .diff-btn.active[data-diff="easy"]   { background: #2e9e60; border-color: #2e9e60; }
+  [data-theme="light"] .diff-btn.active[data-diff="medium"] { background: #5c6bc0; border-color: #5c6bc0; }
+  [data-theme="light"] .diff-btn.active[data-diff="hard"]   { background: #e91e8c; border-color: #e91e8c; }
+  /* Active level buttons */
+  [data-theme="light"] .level-btn[data-level="A1"].active { background: #039be5; border-color: #039be5; color: #fff; }
+  [data-theme="light"] .level-btn[data-level="A2"].active { background: #2e9e60; border-color: #2e9e60; color: #fff; }
+  [data-theme="light"] .level-btn[data-level="B1"].active { background: #5c6bc0; border-color: #5c6bc0; color: #fff; }
+  [data-theme="light"] .level-btn[data-level="B2"].active { background: #f57c00; border-color: #f57c00; color: #fff; }
+  [data-theme="light"] .level-btn[data-level="C1"].active { background: #e91e8c; border-color: #e91e8c; color: #fff; }
+  [data-theme="light"] .level-btn[data-level="C2"].active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
+  /* Grid */
+  [data-theme="light"] #grid {
+    border-color: #c0c4d8;
+    box-shadow: 0 4px 24px rgba(60,70,120,0.10), inset 0 1px 3px rgba(255,255,255,0.8);
+  }
+  /* Sidebar */
+  [data-theme="light"] .sidebar h2 { color: var(--accent2); border-bottom-color: var(--border); }
+  [data-theme="light"] .stat-val { color: var(--accent); }
+  /* Reset button */
+  [data-theme="light"] #reset-btn {
+    border-color: var(--accent); color: var(--accent);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(60,70,120,0.08);
+  }
+  [data-theme="light"] #reset-btn:hover { background: var(--accent); color: #fff; }
+  /* Win message */
+  [data-theme="light"] #status.win { color: #2e9e60; }
+  /* Section dividers */
+  [data-theme="light"] .section-divider::before,
+  [data-theme="light"] .section-divider::after { background: #c0c4d8; }
+
+  /* ── Dark mode neon overrides for found cells & word list ── */
+  [data-theme="dark"] .cell.found-0  { color: #3dffa0; }
+  [data-theme="dark"] .cell.found-1  { color: #4fc3f7; }
+  [data-theme="dark"] .cell.found-2  { color: #f5c842; }
+  [data-theme="dark"] .cell.found-3  { color: #e84393; }
+  [data-theme="dark"] .cell.found-4  { color: #ce93d8; }
+  [data-theme="dark"] .cell.found-5  { color: #ff9800; }
+  [data-theme="dark"] .cell.found-6  { color: #81c784; }
+  [data-theme="dark"] .cell.found-7  { color: #f06262; }
+  [data-theme="dark"] .cell.found-8  { color: #4dd0e1; }
+  [data-theme="dark"] .cell.found-9  { color: #ffd54f; }
+  [data-theme="dark"] .cell.found-10 { color: #aed581; }
+  [data-theme="dark"] .cell.found-11 { color: #f0b9ff; }
+  [data-theme="dark"] .cell.found-12 { color: #64dcff; }
+  [data-theme="dark"] .cell.found-13 { color: #ff8a65; }
+  [data-theme="dark"] .cell.found-14 { color: #a1887f; }
+
+  [data-theme="dark"] .word-list li.found-0  { color: #3dffa0; border-left-color: #3dffa0; }
+  [data-theme="dark"] .word-list li.found-1  { color: #4fc3f7; border-left-color: #4fc3f7; }
+  [data-theme="dark"] .word-list li.found-2  { color: #f5c842; border-left-color: #f5c842; }
+  [data-theme="dark"] .word-list li.found-3  { color: #e84393; border-left-color: #e84393; }
+  [data-theme="dark"] .word-list li.found-4  { color: #ce93d8; border-left-color: #ce93d8; }
+  [data-theme="dark"] .word-list li.found-5  { color: #ff9800; border-left-color: #ff9800; }
+  [data-theme="dark"] .word-list li.found-6  { color: #81c784; border-left-color: #81c784; }
+  [data-theme="dark"] .word-list li.found-7  { color: #f06262; border-left-color: #f06262; }
+  [data-theme="dark"] .word-list li.found-8  { color: #4dd0e1; border-left-color: #4dd0e1; }
+  [data-theme="dark"] .word-list li.found-9  { color: #ffd54f; border-left-color: #ffd54f; }
+  [data-theme="dark"] .word-list li.found-10 { color: #aed581; border-left-color: #aed581; }
+  [data-theme="dark"] .word-list li.found-11 { color: #f0b9ff; border-left-color: #f0b9ff; }
+  [data-theme="dark"] .word-list li.found-12 { color: #64dcff; border-left-color: #64dcff; }
+  [data-theme="dark"] .word-list li.found-13 { color: #ff8a65; border-left-color: #ff8a65; }
+  [data-theme="dark"] .word-list li.found-14 { color: #a1887f; border-left-color: #a1887f; }
+
+
+  #status { margin-top: 24px; font-size: 11px; letter-spacing: 2px; color: var(--muted); min-height: 16px; }
   #status.win {
-    color: var(--found);
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: 3px;
-    animation: glow 1s infinite alternate;
-    cursor: pointer;
+    color: #1e8a56; font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+    letter-spacing: 3px; animation: glow 1s infinite alternate; cursor: pointer;
   }
-  @keyframes glow {
-    from { text-shadow: 0 0 10px var(--found); }
-    to { text-shadow: 0 0 30px var(--found), 0 0 60px var(--found); }
-  }
+  [data-theme="dark"] #status.win { color: #3dffa0; }
+  @keyframes glow { from { text-shadow: 0 0 8px currentColor; } to { text-shadow: 0 0 24px currentColor, 0 0 48px currentColor; } }
+
   #reset-btn {
-    margin-top: 20px;
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 2px;
-    width: 100%;
+    margin-top: 20px; background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; text-transform: uppercase; padding: 10px 20px;
+    cursor: pointer; transition: all 0.2s; border-radius: 2px; width: 100%;
   }
   #reset-btn:hover { background: var(--accent); color: var(--bg); }
 
@@ -219,21 +319,29 @@
   .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--accent); line-height: 1; }
   .stat-label { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
   .word-count-info { margin-top: 14px; font-size: 10px; color: var(--muted); letter-spacing: 1px; line-height: 1.7; }
-
-  code { color: var(--found); background: #13131c; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
+  code { color: #1e8a56; background: var(--bg2); padding: 2px 6px; border-radius: 3px; font-size: 11px; border: 1px solid var(--border); }
+  [data-theme="dark"] code { color: #3dffa0; }
   a { color: var(--accent); }
 </style>
 </head>
 <body>
 
-<h1>WORDSEARCH</h1>
-<div class="subtitle">German Vocabulary — 15 words per round</div>
+<button id="theme-toggle" onclick="toggleTheme()" title="Design wechseln">☀</button>
 
-<div id="loading"><div class="spinner">LOADING WORDS.TXT...</div></div>
+<h1>WÖRTERSUCHE</h1>
+<div class="subtitle" id="subtitle">Deutsches Vokabular — 15 Wörter pro Runde</div>
 
-<!-- Level selector (shown after load) -->
-<div id="controls" style="display:none; flex-direction:column; align-items:center;">
-  <div class="level-divider">SELECT LEVELS</div>
+<div id="loading"><div class="spinner">WÖRTERLISTE WIRD GELADEN...</div></div>
+
+<div id="controls">
+  <div class="section-divider">SCHWIERIGKEITSGRAD</div>
+  <div class="diff-selector">
+    <button class="diff-btn" data-diff="easy"   onclick="setDifficulty('easy')">Leicht 12×12</button>
+    <button class="diff-btn active" data-diff="medium" onclick="setDifficulty('medium')">Mittel 15×15</button>
+    <button class="diff-btn" data-diff="hard"   onclick="setDifficulty('hard')">Schwer 20×20</button>
+  </div>
+
+  <div class="section-divider">VOKABELNIVEAU</div>
   <div class="level-selector">
     <button class="level-btn active" data-level="A1" onclick="toggleLevel('A1')">A1</button>
     <button class="level-btn active" data-level="A2" onclick="toggleLevel('A2')">A2</button>
@@ -251,34 +359,49 @@
     <div id="status"></div>
   </div>
   <div class="sidebar">
-    <h2>Find These</h2>
+    <h2>Finde diese</h2>
     <ul class="word-list" id="word-list"></ul>
     <div class="stats">
-      <div class="stat"><div class="stat-val" id="found-count">0</div><div class="stat-label">Found</div></div>
-      <div class="stat"><div class="stat-val" id="total-count">0</div><div class="stat-label">Total</div></div>
-      <div class="stat"><div class="stat-val" id="round-count">1</div><div class="stat-label">Round</div></div>
+      <div class="stat"><div class="stat-val" id="found-count">0</div><div class="stat-label">Gefunden</div></div>
+      <div class="stat"><div class="stat-val" id="total-count">0</div><div class="stat-label">Gesamt</div></div>
+      <div class="stat"><div class="stat-val" id="round-count">1</div><div class="stat-label">Runde</div></div>
     </div>
     <div class="word-count-info" id="word-count-info"></div>
-    <button id="reset-btn" onclick="initGame()">New Round</button>
+    <button id="reset-btn" onclick="initGame()">Neue Runde</button>
   </div>
 </div>
 
 <script>
-const WORDS_PER_ROUND = 15;
-const GRID_SIZE = 15;
+// ─── Theme toggle ─────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isDark ? '☾' : '☀';
+}
+
+// ─── Config ───────────────────────────────────────────────
+const DIFFICULTY = {
+  easy:   { grid: 12, words: 10, cellSize: 40 },
+  medium: { grid: 15, words: 15, cellSize: 38 },
+  hard:   { grid: 20, words: 20, cellSize: 30 },
+};
 const DIRECTIONS = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
 const ALL_LEVELS = ['A1','A2','B1','B2','C1','C2'];
+const FOUND_COLORS = 15;
 
-// All words keyed by level: { A1: ['HAUS',...], A2: [...], ... }
+// ─── State ────────────────────────────────────────────────
 let wordsByLevel = { A1:[], A2:[], B1:[], B2:[], C1:[], C2:[] };
 let activeLevels = new Set(['A1','A2','B1','B2','C1','C2']);
+let currentDiff = 'medium';
 let usedWords = new Set();
 let roundNumber = 0;
+let wordColorMap = {};
 
 let grid = [], placedWords = [], foundWords = new Set();
 let selecting = false, startCell = null, currentSelection = [];
 
-// ─── Load & parse words.txt ───────────────────────────────
+// ─── Load words.txt ───────────────────────────────────────
 function parseWordsTxt(text) {
   const result = { A1:[], A2:[], B1:[], B2:[], C1:[], C2:[] };
   for (const raw of text.split('\n')) {
@@ -291,7 +414,6 @@ function parseWordsTxt(text) {
     if (!result[level]) continue;
     result[level].push(word);
   }
-  // Deduplicate each level
   for (const lvl of ALL_LEVELS) result[lvl] = [...new Set(result[lvl])];
   return result;
 }
@@ -302,52 +424,68 @@ async function loadWords() {
   const gameWrap = document.getElementById('game-wrap');
   try {
     const res = await fetch('words.txt');
-    if (!res.ok) throw new Error(`HTTP error ${res.status} — file not found.`);
+    if (!res.ok) throw new Error(`HTTP-Fehler ${res.status} — Datei nicht gefunden.`);
     const text = await res.text();
     wordsByLevel = parseWordsTxt(text);
-    const total = ALL_LEVELS.reduce((s, l) => s + wordsByLevel[l].length, 0);
-    if (total < WORDS_PER_ROUND) throw new Error(`Only ${total} valid words found. Need at least ${WORDS_PER_ROUND}.`);
+    const total = ALL_LEVELS.reduce((s,l) => s + wordsByLevel[l].length, 0);
+    if (total < 10) throw new Error(`Nur ${total} gültige Wörter gefunden. Mindestens 10 erforderlich.`);
     loading.style.display = 'none';
     controls.style.display = 'flex';
     gameWrap.style.display = 'flex';
+    updateSubtitle();
     initGame();
   } catch (err) {
     loading.innerHTML = `
-      <div style="color:#e84393;font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;margin-bottom:16px;">⚠ COULD NOT LOAD WORDS.TXT</div>
-      <div style="color:#5a5a7a;font-size:11px;letter-spacing:1px;line-height:2;max-width:460px;text-align:left;">
-        <strong style="color:#e8e8f0">Error:</strong> ${err.message}<br><br>
-        Make sure <strong style="color:#f5c842">words.txt</strong> is in the <strong style="color:#f5c842">same folder</strong> as this HTML file,
-        and open via a local server — not by double-clicking.<br><br>
-        <strong style="color:#e8e8f0">Quick start:</strong><br>
+      <div style="color:var(--accent2);font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;margin-bottom:16px;">⚠ WORDS.TXT KONNTE NICHT GELADEN WERDEN</div>
+      <div style="color:var(--muted);font-size:11px;letter-spacing:1px;line-height:2;max-width:460px;text-align:left;">
+        <strong style="color:var(--text)">Fehler:</strong> ${err.message}<br><br>
+        Stelle sicher, dass <strong style="color:var(--accent)">words.txt</strong> im selben Ordner wie diese HTML-Datei liegt und über einen lokalen Server geöffnet wird.<br><br>
+        <strong style="color:var(--text)">Schnellstart:</strong><br>
         <code>python3 -m http.server 8080</code><br>
-        Then open <a href="http://localhost:8080">http://localhost:8080</a>
+        Dann <a href="http://localhost:8080">http://localhost:8080</a> im Browser öffnen.
       </div>`;
   }
 }
 
-// ─── Level toggling ───────────────────────────────────────
+// ─── Difficulty ───────────────────────────────────────────
+function updateSubtitle() {
+  const words = DIFFICULTY[currentDiff].words;
+  document.getElementById('subtitle').textContent =
+    `Deutsches Vokabular — ${words} Wörter pro Runde`;
+}
+
+function setDifficulty(diff) {
+  currentDiff = diff;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.diff-btn[data-diff="${diff}"]`).classList.add('active');
+  document.documentElement.style.setProperty('--cell-size', DIFFICULTY[diff].cellSize + 'px');
+  usedWords = new Set();
+  roundNumber = 0;
+  updateSubtitle();
+  initGame();
+}
+
+// ─── Vocab level toggling ─────────────────────────────────
 function toggleLevel(level) {
   if (activeLevels.has(level)) {
-    // Don't allow deselecting all
     if (activeLevels.size === 1) return;
     activeLevels.delete(level);
   } else {
     activeLevels.add(level);
   }
   document.querySelector(`.level-btn[data-level="${level}"]`).classList.toggle('active');
-  usedWords = new Set(); // reset used pool on level change
+  usedWords = new Set();
+  roundNumber = 0;
   updateLevelWarning();
   initGame();
 }
 
 function updateLevelWarning() {
   const pool = getActivePool();
+  const needed = DIFFICULTY[currentDiff].words;
   const warn = document.getElementById('level-warning');
-  if (pool.length < WORDS_PER_ROUND) {
-    warn.textContent = `⚠ Only ${pool.length} words available — select more levels!`;
-  } else {
-    warn.textContent = '';
-  }
+  warn.textContent = pool.length < needed
+    ? `⚠ Nur ${pool.length} Wörter verfügbar — wähle mehr Niveaus!` : '';
 }
 
 function getActivePool() {
@@ -357,52 +495,67 @@ function getActivePool() {
 }
 
 // ─── Round logic ──────────────────────────────────────────
-function pickRoundWords() {
-  let pool = getActivePool();
-  let available = pool.filter(w => !usedWords.has(w));
-  if (available.length < WORDS_PER_ROUND) {
-    usedWords = new Set();
-    available = [...pool];
-  }
-  available.sort(() => Math.random() - 0.5);
-  const chosen = available.slice(0, Math.min(WORDS_PER_ROUND, available.length));
-  chosen.forEach(w => usedWords.add(w));
-  return chosen;
-}
-
 function initGame() {
   const pool = getActivePool();
   if (pool.length < 1) return;
+  updateLevelWarning();
+
+  const cfg = DIFFICULTY[currentDiff];
+  document.documentElement.style.setProperty('--cell-size', cfg.cellSize + 'px');
+
+  if (usedWords.size >= pool.length) {
+    usedWords = new Set();
+    roundNumber = 0;
+  }
 
   roundNumber++;
-  grid = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(''));
-  placedWords = [];
   foundWords = new Set();
+  wordColorMap = {};
   currentSelection = [];
   selecting = false;
   startCell = null;
 
-  const roundWords = pickRoundWords();
-  for (const w of [...roundWords].sort(() => Math.random() - 0.5)) placeWord(w);
+  const fittablePool = pool.filter(w => w.length <= cfg.grid);
+  let available = fittablePool.filter(w => !usedWords.has(w));
+  if (available.length === 0) available = [...fittablePool];
+  const needed = Math.min(cfg.words, fittablePool.length);
 
-  fillRandom();
-  renderGrid();
+  let attempts = 0;
+  do {
+    grid = Array.from({length: cfg.grid}, () => Array(cfg.grid).fill(''));
+    placedWords = [];
+    let candidates = [...available].sort(() => Math.random() - 0.5);
+    candidates.sort((a, b) => a.length - b.length);
+    for (const w of candidates) {
+      if (placedWords.length === needed) break;
+      placeWord(w, cfg.grid);
+    }
+    attempts++;
+  } while (placedWords.length < needed && attempts < 10);
+
+  placedWords.forEach(({word}) => usedWords.add(word));
+
+  const shuffledColors = [...Array(FOUND_COLORS).keys()].sort(() => Math.random() - 0.5);
+  placedWords.forEach(({word}, i) => { wordColorMap[word] = shuffledColors[i % FOUND_COLORS]; });
+
+  fillRandom(cfg.grid);
+  renderGrid(cfg.grid);
   renderWords();
   document.getElementById('status').textContent = '';
   document.getElementById('status').className = '';
   document.getElementById('round-count').textContent = roundNumber;
   document.getElementById('word-count-info').textContent =
-    `${pool.length} words in pool · ${usedWords.size} seen`;
+    `${fittablePool.length} Wörter im Pool · ${usedWords.size} gesehen · ${cfg.grid}×${cfg.grid} Raster`;
   updateStats();
 }
 
 // ─── Grid building ────────────────────────────────────────
-function placeWord(word) {
-  for (let tries = 0; tries < 200; tries++) {
+function placeWord(word, size) {
+  for (let tries = 0; tries < 300; tries++) {
     const dir = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
-    const r = Math.floor(Math.random() * GRID_SIZE);
-    const c = Math.floor(Math.random() * GRID_SIZE);
-    if (canPlace(word, r, c, dir)) {
+    const r = Math.floor(Math.random() * size);
+    const c = Math.floor(Math.random() * size);
+    if (canPlace(word, r, c, dir, size)) {
       for (let i = 0; i < word.length; i++)
         grid[r + dir[0]*i][c + dir[1]*i] = word[i];
       placedWords.push({word, r, c, dir});
@@ -411,18 +564,18 @@ function placeWord(word) {
   }
   return false;
 }
-function canPlace(word, r, c, dir) {
+function canPlace(word, r, c, dir, size) {
   for (let i = 0; i < word.length; i++) {
     const nr = r + dir[0]*i, nc = c + dir[1]*i;
-    if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) return false;
+    if (nr < 0 || nr >= size || nc < 0 || nc >= size) return false;
     if (grid[nr][nc] !== '' && grid[nr][nc] !== word[i]) return false;
   }
   return true;
 }
-function fillRandom() {
+function fillRandom(size) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  for (let r = 0; r < GRID_SIZE; r++)
-    for (let c = 0; c < GRID_SIZE; c++)
+  for (let r = 0; r < size; r++)
+    for (let c = 0; c < size; c++)
       if (!grid[r][c]) grid[r][c] = chars[Math.floor(Math.random()*26)];
 }
 
@@ -430,12 +583,12 @@ function fillRandom() {
 function cellId(r, c) { return `cell-${r}-${c}`; }
 function cellCoords(el) { const p = el.id.split('-'); return [+p[1], +p[2]]; }
 
-function renderGrid() {
+function renderGrid(size) {
   const gridEl = document.getElementById('grid');
-  gridEl.style.gridTemplateColumns = `repeat(${GRID_SIZE}, var(--cell-size))`;
+  gridEl.style.gridTemplateColumns = `repeat(${size}, var(--cell-size))`;
   gridEl.innerHTML = '';
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.id = cellId(r, c);
@@ -458,7 +611,6 @@ function renderWords() {
     const li = document.createElement('li');
     li.textContent = word;
     li.id = `word-${word}`;
-    if (foundWords.has(word)) li.className = 'found';
     ul.appendChild(li);
   }
   document.getElementById('total-count').textContent = placedWords.length;
@@ -481,11 +633,11 @@ function getLineCells(r1, c1, r2, c2) {
 }
 function highlightSelection(cells) {
   document.querySelectorAll('.cell.selected').forEach(el => {
-    if (!el.classList.contains('found')) el.classList.remove('selected');
+    if (!el.className.includes('found')) el.classList.remove('selected');
   });
   for (const [r,c] of cells) {
     const el = document.getElementById(cellId(r,c));
-    if (el && !el.classList.contains('found')) el.classList.add('selected');
+    if (el && !el.className.includes('found')) el.classList.add('selected');
   }
 }
 function checkSelection(cells) {
@@ -500,11 +652,13 @@ function checkSelection(cells) {
 }
 function markFound(word, cells) {
   foundWords.add(word);
+  const colorClass = `found-${wordColorMap[word]}`;
   for (const [r,c] of cells) {
     const el = document.getElementById(cellId(r,c));
-    if (el) { el.classList.remove('selected'); el.classList.add('found'); }
+    if (el) { el.classList.remove('selected'); el.classList.add(colorClass); }
   }
-  document.getElementById(`word-${word}`).className = 'found';
+  const li = document.getElementById(`word-${word}`);
+  if (li) { li.className = `found ${colorClass}`; }
   updateStats();
   if (foundWords.size === placedWords.length) {
     const s = document.getElementById('status');
@@ -520,10 +674,8 @@ function clearSelection() {
 
 // ─── Mouse ────────────────────────────────────────────────
 function onMouseDown(e) {
-  selecting = true;
-  startCell = cellCoords(e.target);
-  currentSelection = [startCell];
-  highlightSelection([startCell]);
+  selecting = true; startCell = cellCoords(e.target);
+  currentSelection = [startCell]; highlightSelection([startCell]);
 }
 function onMouseEnter(e) {
   if (!selecting) return;
@@ -532,8 +684,7 @@ function onMouseEnter(e) {
   highlightSelection(currentSelection);
 }
 function onMouseUp() {
-  if (!selecting) return;
-  selecting = false;
+  if (!selecting) return; selecting = false;
   if (currentSelection.length > 1) checkSelection(currentSelection);
   else clearSelection();
   currentSelection = [];
@@ -546,24 +697,19 @@ function getTouchCell(e) {
   return el && el.classList.contains('cell') ? el : null;
 }
 function onTouchStart(e) {
-  e.preventDefault();
-  selecting = true;
-  startCell = cellCoords(e.target);
-  currentSelection = [startCell];
+  e.preventDefault(); selecting = true;
+  startCell = cellCoords(e.target); currentSelection = [startCell];
   highlightSelection([startCell]);
 }
 function onTouchMove(e) {
-  e.preventDefault();
-  if (!selecting) return;
-  const el = getTouchCell(e);
-  if (!el) return;
+  e.preventDefault(); if (!selecting) return;
+  const el = getTouchCell(e); if (!el) return;
   const [r2,c2] = cellCoords(el);
   currentSelection = getLineCells(startCell[0], startCell[1], r2, c2);
   highlightSelection(currentSelection);
 }
 function onTouchEnd(e) {
-  if (!selecting) return;
-  selecting = false;
+  if (!selecting) return; selecting = false;
   if (currentSelection.length > 1) checkSelection(currentSelection);
   else clearSelection();
   currentSelection = [];

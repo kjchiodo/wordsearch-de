@@ -13,6 +13,15 @@ A German vocabulary word search game playable in the browser. Words are loaded d
 - 🎯 15 words per round, randomly selected from the chosen level
 - 🔁 "New Round" button to regenerate the puzzle
 - 📊 Tracks words found and total words per round
+- 🚀 No sign-up needed — just open and play
+
+---
+
+## Limitations
+
+- 🔤 Umlaut-safe grid: ä/ö/ü are written as AE/OE/UE (e.g., MÜLLER → MUELLER)
+- 💾 No progress saving yet — each visit starts a fresh round
+- 🌐 Requires a local server to run offline (see [Run Locally](#run-locally)) due to the `words.txt` fetch
 
 ---
 
@@ -74,10 +83,9 @@ python3 -m http.server
 wordsearch-de/
 ├── index.html       # Main game page
 ├── words.txt        # German vocabulary by CEFR level
-└── ...              # JS/CSS assets
+├── LICENSE          # GPL-3.0 license
+└── README.md        # Project documentation
 ```
-
----
 
 ## Contributing
 
@@ -87,4 +95,4 @@ Have German vocabulary suggestions? Feel free to open a PR with additions to `wo
 
 ## License
 
-MIT
+This project is licensed under the [GNU General Public License v3.0](LICENSE).

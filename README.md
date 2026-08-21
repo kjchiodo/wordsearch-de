@@ -13,6 +13,7 @@ A German vocabulary word search game playable in the browser. Words are loaded d
 - 🎯 15 words per round, randomly selected from the chosen level
 - 🔁 "New Round" button to regenerate the puzzle
 - 📊 Tracks words found and total words per round
+- 🌗 Comes in dark and light mode
 - 🚀 No sign-up needed — just open and play
 
 ---

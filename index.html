@@ -662,7 +662,7 @@ function markFound(word, cells) {
   updateStats();
   if (foundWords.size === placedWords.length) {
     const s = document.getElementById('status');
-    s.textContent = '🎉 RUNDE GESCHAFFT! Klick für nächste →';
+    s.textContent = '🎉 RUNDE GESCHAFFT! Klicke für nächste Runde →';
     s.className = 'win';
     s.onclick = initGame;
   }
